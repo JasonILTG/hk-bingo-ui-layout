@@ -1,1 +1,181 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="style.css">
+	</head>
 
+	<body>
+		<button id="showSettings" onclick="showSettings()">Show copiable settings</button>
+		<div id="toggle">
+			<img src="resources/grub.png" id="toggle_grub" class="toggle" onclick="toggle(this)" />
+			<img src="resources/devout.png" id="toggle_devout" class="toggle" onclick="toggle(this)" />
+			<img src="resources/trinket1.png" id="toggle_trinket1" class="toggle" onclick="toggle(this)" />
+			<img src="resources/trinket2.png" id="toggle_trinket2" class="toggle" onclick="toggle(this)" />
+			<img src="resources/trinket3.png" id="toggle_trinket3" class="toggle" onclick="toggle(this)" />
+			<img src="resources/trinket4.png" id="toggle_trinket4" class="toggle" onclick="toggle(this)" />
+			<img src="resources/ore.png" id="toggle_ore" class="toggle" onclick="toggle(this)" />
+			<img src="resources/maps.png" id="toggle_maps" class="toggle" onclick="toggle(this)" />
+			<img src="resources/cornifer.png" id="toggle_cornifer" class="toggle" onclick="toggle(this)" />
+			<img src="resources/regg.png" id="toggle_regg" class="toggle" onclick="toggle(this)" />
+			<img src="resources/DreamPlant.png" id="toggle_DreamPlant" class="toggle" onclick="toggle(this)" />
+			<img src="resources/lifeblood.png" id="toggle_lifeblood" class="toggle" onclick="toggle(this)" />
+			<img src="resources/charms.png" id="toggle_charms" class="toggle" onclick="toggle(this)" />
+			<img src="resources/pins.png" id="toggle_pins" class="toggle" onclick="toggle(this)" />
+			<img src="resources/notches.png" id="toggle_notches" class="toggle" onclick="toggle(this)" />
+			<img src="resources/ghs.png" id="toggle_ghs" class="toggle" onclick="toggle(this)" />
+		</div>
+
+		<div id="layout">
+			<img src="resources/background.png" id="background" />
+		</div>
+
+		<!-- The Modal -->
+		<div id="settings" class="modal">
+			<!-- Modal content -->
+			<div class="modal-content">
+				<span class="close">&times;</span>
+				<h1>Copy this into your BingoUI.GlobalSettings.json file</h1>
+				<div id="settings-text" />
+			</div>
+		</div>
+	</body>
+
+	<script>
+		// Get the modal
+		var modal = document.getElementById("settings");
+
+		// Get the button that opens the modal
+		var btn = document.getElementById("showSettings");
+
+		// Get the <span> element that closes the modal
+		var span = document.getElementsByClassName("close")[0];
+
+		function addP(parent, text) {
+			var p = document.createElement("div");
+			p.textContent = text;
+			p.style.fontFamily = "monospace";
+			p.style.whiteSpace = "pre";
+			parent.appendChild(p);
+		}
+
+		// When the user clicks on the button, open the modal
+		btn.onclick = function() {
+			modal.style.display = "block";
+			var t = document.getElementById("settings-text");
+			addP(t, "{");
+			addP(t, "  \"customLayout\": true,");
+			var names = ["grub", "devout", "trinket1", "trinket2", "trinket3", "trinket4", "ore", "maps", "cornifer", "regg", "DreamPlant", "lifeblood", "charms", "pins", "notches", "ghs"];
+			var bgRect = document.getElementById("background").getBoundingClientRect();
+			for (var i = 0; i < names.length; i++) {
+				var icon = document.getElementById("icon_" + names[i]);
+				if (icon) {
+					addP(t, "  \"" + names[i] + "_enabled\": true,");
+					var iconRect = icon.getBoundingClientRect();
+					var x = (iconRect.left - bgRect.left) * 1.0 / bgRect.width;
+					var y = (bgRect.bottom - iconRect.bottom) * 1.0 / bgRect.height;
+					addP(t, "  \"" + names[i] + "_x\": " + x + ",");
+					addP(t, "  \"" + names[i] + "_y\": " + y + ",");
+				} else {
+					addP(t, "  \"" + names[i] + "_enabled\": false,");
+				}
+			}
+			addP(t, "  \"alwaysDisplay\": false");
+			addP(t, "}");
+		}
+
+		// When the user clicks on <span> (x), close the modal
+		span.onclick = function() {
+			close();
+		}
+
+		// When the user clicks anywhere outside of the modal, close it
+		window.onclick = function(event) {
+			if (event.target == modal) {
+				close();
+			}
+		}
+
+		// Close the modal
+		function close() {
+			modal.style.display = "none";
+			var parent = document.getElementById("settings-text");
+			while (parent.firstChild) {
+				parent.removeChild(parent.firstChild);
+			}
+		}
+
+		function toggle(elmnt) {
+			var name = elmnt.id.substring(7)
+			if (elmnt.style.opacity == 1) {
+				elmnt.style.opacity = 0.4;
+				var icon = document.getElementById("icon_" + name);
+				icon.parentNode.removeChild(icon);
+			} else {
+				elmnt.style.opacity = 1;
+				var icon = document.createElement("IMG");
+				icon.id = "icon_" + name;
+				icon.class = "icon";
+				icon.src = "resources/" + name + ".png";
+				document.getElementById("layout").appendChild(icon);
+
+				var names = ["grub", "devout", "trinket1", "trinket2", "trinket3", "trinket4", "ore", "maps", "cornifer", "regg", "DreamPlant", "lifeblood", "charms", "pins", "notches", "ghs"];
+				var i = names.findIndex((n) => n == name);
+				var bgRect = document.getElementById("background").getBoundingClientRect();
+				icon.style.position = "absolute";
+				icon.style.left = (bgRect.left + (bgRect.width * (Math.min(i, 14)*20 + 1) / 300)) + "px";
+				icon.style.top = (bgRect.top + bgRect.height - (bgRect.height * (11 * Math.max(1, i-13) + 1) / 100)) + "px";
+				icon.style.zIndex = 2;
+				icon.style.width = "3%";
+
+				dragElement(icon);
+			}
+		}
+
+		function showSettings() {
+			document.getElementById("myPopup").classList.toggle("show");
+			var bgRect = document.getElementById("background").getBoundingClientRect();
+			var names = ["grub", "devout", "trinket1", "trinket2", "trinket3", "trinket4", "ore", "maps", "cornifer", "regg", "DreamPlant", "lifeblood", "charms", "pins", "notches", "ghs"];
+			for (var i = 0; i < names.length; i++) {
+				var iconRect = document.getElementById("icon_" + names[i]).getBoundingClientRect();
+
+				console.log((iconRect.x - bgRect.x)*1.0 / bgRect.width);
+				console.log((bgRect.bottom - iconRect.bottom)*1.0 / bgRect.height);
+			}
+		}
+
+		function dragElement(elmnt) {
+			var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+			elmnt.onmousedown = dragMouseDown;
+
+			function dragMouseDown(e) {
+				e = e || window.event;
+				e.preventDefault();
+				// get the mouse cursor position at startup:
+				pos3 = e.clientX;
+				pos4 = e.clientY;
+				document.onmouseup = closeDragElement;
+				// call a function whenever the cursor moves:
+				document.onmousemove = elementDrag;
+			}
+
+			function elementDrag(e) {
+				e = e || window.event;
+				e.preventDefault();
+				// calculate the new cursor position:
+				pos1 = pos3 - e.clientX;
+				pos2 = pos4 - e.clientY;
+				pos3 = e.clientX;
+				pos4 = e.clientY;
+				// set the element's new position:
+				elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+				elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+			}
+
+			function closeDragElement() {
+				/* stop moving when mouse button is released:*/
+				document.onmouseup = null;
+				document.onmousemove = null;
+			}
+		}
+	</script>
+</html>
