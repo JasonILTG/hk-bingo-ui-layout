@@ -9,6 +9,7 @@
 		<h2>Click on icons on the top bar to toggle, then arrange with drag-and-drop</h2>
 		<p><a href="https://github.com/JasonILTG/HollowKnight.BingoUI/releases/tag/v1.4">Configurable version of BingoUI available here.</a></p>
 		<button id="showSettings" onclick="showSettings()">Show copiable settings</button>
+		<input type="checkbox" id="snapToGrid" checked>Snap to grid</input>
 		<div id="toggle">
 			<img src="resources/grub.png" id="toggle_grub" class="toggle" onclick="toggle(this)" />
 			<img src="resources/devout.png" id="toggle_devout" class="toggle" onclick="toggle(this)" />
@@ -107,6 +108,57 @@
 			}
 		}
 
+		const WIDTH_SCALE = 300;
+		const HEIGHT_SCALE = 100;
+
+		// index -> grid
+		function gridIndexToGridPosition(gridLeftIndex, gridTopIndex) {
+			// abstract grid ranging from (1,1) to (301, 89)
+			return {
+				gridLeft: 20 * gridLeftIndex + 1,
+				gridTop:  11 * (gridTopIndex + 1) + 1
+			}
+		}
+
+		// index <- grid
+		function gridPositionToGridIndex(gridLeft, gridTop) {
+			return {
+				gridLeftIndex: Math.round((gridLeft - 1)/20),
+				gridTopIndex:  Math.round((gridTop - 1)/11 - 1)
+			}
+		}
+
+		// grid -> real
+		function gridPositionToRealPosition(bgRect, gridLeft, gridTop) {
+			return {
+				left: bgRect.left + bgRect.width * (gridLeft / WIDTH_SCALE),
+				top:  bgRect.top  + bgRect.height - bgRect.height * (gridTop / HEIGHT_SCALE)
+			};
+		}
+
+		// grid <- real
+		function realPositionToGridPosition(bgRect, left, top) {
+			const gridLeft = WIDTH_SCALE * (left - bgRect.left) / bgRect.width;
+			const gridTop = -HEIGHT_SCALE * (top - bgRect.top - bgRect.height) / bgRect.height;
+			return { gridLeft, gridTop };
+		}
+
+		// index -> (grid ->) real
+		function gridIndexToRealPosition(bgRect, gridLeftIndex, gridTopIndex) {
+			const { gridLeft, gridTop } = gridIndexToGridPosition(gridLeftIndex, gridTopIndex);
+			return gridPositionToRealPosition(bgRect, gridLeft, gridTop);
+		}
+
+		// index (<- grid) <- real
+		function realPositionToGridIndex(bgRect, left, top) {
+			const { gridLeft, gridTop } = realPositionToGridPosition(bgRect, left, top);
+			return gridPositionToGridIndex(gridLeft, gridTop);
+		}
+
+		function defaultRealPosition(bgRect, i) {
+			return gridIndexToRealPosition(bgRect, Math.min(i, 14), Math.max(0, i - 14));
+		}
+
 		function toggle(elmnt) {
 			var name = elmnt.id.substring(7)
 			if (elmnt.style.opacity == 1) {
@@ -125,8 +177,9 @@
 				var i = names.findIndex((n) => n == name);
 				var bgRect = document.getElementById("background").getBoundingClientRect();
 				icon.style.position = "absolute";
-				icon.style.left = (bgRect.left + (bgRect.width * (Math.min(i, 14)*20 + 1) / 300)) + "px";
-				icon.style.top = (bgRect.top + bgRect.height - (bgRect.height * (11 * Math.max(1, i-13) + 1) / 100)) + "px";
+				const { left, top } = defaultRealPosition(bgRect, i);
+				icon.style.left = left + "px";
+				icon.style.top = top + "px";
 				icon.style.zIndex = 2;
 				icon.style.width = "3%";
 
@@ -178,6 +231,21 @@
 				/* stop moving when mouse button is released:*/
 				document.onmouseup = null;
 				document.onmousemove = null;
+
+				if (!document.getElementById("snapToGrid").checked) {
+					return;
+				}
+
+				const bgRect = document.getElementById("background").getBoundingClientRect();
+
+				const top = (elmnt.offsetTop - pos2);
+				const left = (elmnt.offsetLeft - pos1);
+
+				const { gridLeftIndex, gridTopIndex } = realPositionToGridIndex(bgRect, left, top);
+				const snappedReal = gridIndexToRealPosition(bgRect, gridLeftIndex, gridTopIndex);
+
+				elmnt.style.top = snappedReal.top + "px";
+				elmnt.style.left = snappedReal.left + "px";
 			}
 		}
 	</script>
